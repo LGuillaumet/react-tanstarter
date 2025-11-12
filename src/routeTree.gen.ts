@@ -14,9 +14,13 @@ import { Route as authPagesRouteRouteImport } from './routes/(auth-pages)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as authPagesSignupRouteImport } from './routes/(auth-pages)/signup'
 import { Route as authPagesLoginRouteImport } from './routes/(auth-pages)/login'
+import { Route as authPagesAuth_errorRouteImport } from './routes/(auth-pages)/auth_error'
 import { Route as authenticatedDashboardRouteRouteImport } from './routes/(authenticated)/dashboard/route'
 import { Route as authenticatedDashboardIndexRouteImport } from './routes/(authenticated)/dashboard/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as authenticatedpatatesPatatesIndexRouteImport } from './routes/(authenticated)/(patates)/patates.index'
+import { Route as authenticatedpatatesPatatesCreateRouteImport } from './routes/(authenticated)/(patates)/patates.create'
+import { Route as authenticatedpatatesPatatesPatateIdRouteImport } from './routes/(authenticated)/(patates)/patates.$patateId'
 
 const authenticatedRouteRoute = authenticatedRouteRouteImport.update({
   id: '/(authenticated)',
@@ -41,6 +45,11 @@ const authPagesLoginRoute = authPagesLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => authPagesRouteRoute,
 } as any)
+const authPagesAuth_errorRoute = authPagesAuth_errorRouteImport.update({
+  id: '/auth_error',
+  path: '/auth_error',
+  getParentRoute: () => authPagesRouteRoute,
+} as any)
 const authenticatedDashboardRouteRoute =
   authenticatedDashboardRouteRouteImport.update({
     id: '/dashboard',
@@ -58,21 +67,47 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const authenticatedpatatesPatatesIndexRoute =
+  authenticatedpatatesPatatesIndexRouteImport.update({
+    id: '/(patates)/patates/',
+    path: '/patates/',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
+const authenticatedpatatesPatatesCreateRoute =
+  authenticatedpatatesPatatesCreateRouteImport.update({
+    id: '/(patates)/patates/create',
+    path: '/patates/create',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
+const authenticatedpatatesPatatesPatateIdRoute =
+  authenticatedpatatesPatatesPatateIdRouteImport.update({
+    id: '/(patates)/patates/$patateId',
+    path: '/patates/$patateId',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof authenticatedRouteRouteWithChildren
+  '/': typeof IndexRoute
   '/dashboard': typeof authenticatedDashboardRouteRouteWithChildren
+  '/auth_error': typeof authPagesAuth_errorRoute
   '/login': typeof authPagesLoginRoute
   '/signup': typeof authPagesSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard/': typeof authenticatedDashboardIndexRoute
+  '/patates/$patateId': typeof authenticatedpatatesPatatesPatateIdRoute
+  '/patates/create': typeof authenticatedpatatesPatatesCreateRoute
+  '/patates': typeof authenticatedpatatesPatatesIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof authenticatedRouteRouteWithChildren
+  '/': typeof IndexRoute
+  '/auth_error': typeof authPagesAuth_errorRoute
   '/login': typeof authPagesLoginRoute
   '/signup': typeof authPagesSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard': typeof authenticatedDashboardIndexRoute
+  '/patates/$patateId': typeof authenticatedpatatesPatatesPatateIdRoute
+  '/patates/create': typeof authenticatedpatatesPatatesCreateRoute
+  '/patates': typeof authenticatedpatatesPatatesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,32 +115,53 @@ export interface FileRoutesById {
   '/(auth-pages)': typeof authPagesRouteRouteWithChildren
   '/(authenticated)': typeof authenticatedRouteRouteWithChildren
   '/(authenticated)/dashboard': typeof authenticatedDashboardRouteRouteWithChildren
+  '/(auth-pages)/auth_error': typeof authPagesAuth_errorRoute
   '/(auth-pages)/login': typeof authPagesLoginRoute
   '/(auth-pages)/signup': typeof authPagesSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/(authenticated)/dashboard/': typeof authenticatedDashboardIndexRoute
+  '/(authenticated)/(patates)/patates/$patateId': typeof authenticatedpatatesPatatesPatateIdRoute
+  '/(authenticated)/(patates)/patates/create': typeof authenticatedpatatesPatatesCreateRoute
+  '/(authenticated)/(patates)/patates/': typeof authenticatedpatatesPatatesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/auth_error'
     | '/login'
     | '/signup'
     | '/api/auth/$'
     | '/dashboard/'
+    | '/patates/$patateId'
+    | '/patates/create'
+    | '/patates'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup' | '/api/auth/$' | '/dashboard'
+  to:
+    | '/'
+    | '/auth_error'
+    | '/login'
+    | '/signup'
+    | '/api/auth/$'
+    | '/dashboard'
+    | '/patates/$patateId'
+    | '/patates/create'
+    | '/patates'
   id:
     | '__root__'
     | '/'
     | '/(auth-pages)'
     | '/(authenticated)'
     | '/(authenticated)/dashboard'
+    | '/(auth-pages)/auth_error'
     | '/(auth-pages)/login'
     | '/(auth-pages)/signup'
     | '/api/auth/$'
     | '/(authenticated)/dashboard/'
+    | '/(authenticated)/(patates)/patates/$patateId'
+    | '/(authenticated)/(patates)/patates/create'
+    | '/(authenticated)/(patates)/patates/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,15 +175,15 @@ declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/(authenticated)': {
       id: '/(authenticated)'
-      path: '/'
-      fullPath: '/'
+      path: ''
+      fullPath: ''
       preLoaderRoute: typeof authenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth-pages)': {
       id: '/(auth-pages)'
-      path: '/'
-      fullPath: '/'
+      path: ''
+      fullPath: ''
       preLoaderRoute: typeof authPagesRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -152,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authPagesLoginRouteImport
       parentRoute: typeof authPagesRouteRoute
     }
+    '/(auth-pages)/auth_error': {
+      id: '/(auth-pages)/auth_error'
+      path: '/auth_error'
+      fullPath: '/auth_error'
+      preLoaderRoute: typeof authPagesAuth_errorRouteImport
+      parentRoute: typeof authPagesRouteRoute
+    }
     '/(authenticated)/dashboard': {
       id: '/(authenticated)/dashboard'
       path: '/dashboard'
@@ -173,15 +236,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(authenticated)/(patates)/patates/': {
+      id: '/(authenticated)/(patates)/patates/'
+      path: '/patates'
+      fullPath: '/patates'
+      preLoaderRoute: typeof authenticatedpatatesPatatesIndexRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
+    '/(authenticated)/(patates)/patates/create': {
+      id: '/(authenticated)/(patates)/patates/create'
+      path: '/patates/create'
+      fullPath: '/patates/create'
+      preLoaderRoute: typeof authenticatedpatatesPatatesCreateRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
+    '/(authenticated)/(patates)/patates/$patateId': {
+      id: '/(authenticated)/(patates)/patates/$patateId'
+      path: '/patates/$patateId'
+      fullPath: '/patates/$patateId'
+      preLoaderRoute: typeof authenticatedpatatesPatatesPatateIdRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
   }
 }
 
 interface authPagesRouteRouteChildren {
+  authPagesAuth_errorRoute: typeof authPagesAuth_errorRoute
   authPagesLoginRoute: typeof authPagesLoginRoute
   authPagesSignupRoute: typeof authPagesSignupRoute
 }
 
 const authPagesRouteRouteChildren: authPagesRouteRouteChildren = {
+  authPagesAuth_errorRoute: authPagesAuth_errorRoute,
   authPagesLoginRoute: authPagesLoginRoute,
   authPagesSignupRoute: authPagesSignupRoute,
 }
@@ -206,11 +292,19 @@ const authenticatedDashboardRouteRouteWithChildren =
 
 interface authenticatedRouteRouteChildren {
   authenticatedDashboardRouteRoute: typeof authenticatedDashboardRouteRouteWithChildren
+  authenticatedpatatesPatatesPatateIdRoute: typeof authenticatedpatatesPatatesPatateIdRoute
+  authenticatedpatatesPatatesCreateRoute: typeof authenticatedpatatesPatatesCreateRoute
+  authenticatedpatatesPatatesIndexRoute: typeof authenticatedpatatesPatatesIndexRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedDashboardRouteRoute:
     authenticatedDashboardRouteRouteWithChildren,
+  authenticatedpatatesPatatesPatateIdRoute:
+    authenticatedpatatesPatatesPatateIdRoute,
+  authenticatedpatatesPatatesCreateRoute:
+    authenticatedpatatesPatatesCreateRoute,
+  authenticatedpatatesPatatesIndexRoute: authenticatedpatatesPatatesIndexRoute,
 }
 
 const authenticatedRouteRouteWithChildren =

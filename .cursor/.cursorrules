@@ -1,0 +1,761 @@
+# Règles Cursor pour TanStack Start React Project
+
+## 🎯 Contexte du Projet
+
+Ce projet utilise:
+
+- **Framework**: TanStack Start (React full-stack)
+- **Langage**: TypeScript avec mode strict
+- **UI**: shadcn/ui avec Tailwind CSS v4
+- **Base de données**: Drizzle ORM avec PostgreSQL
+- **Authentification**: Better Auth
+- **State Management**: TanStack Query
+- **Routing**: TanStack Router
+- **Package Manager**: pnpm
+- **React**: Version 19 avec React Compiler
+
+## 📐 Configuration TypeScript
+
+### Mode Strict Obligatoire
+
+- Toujours utiliser TypeScript en mode strict
+- Activer `strictNullChecks`, `strict`, `noImplicitAny`
+- Ne jamais utiliser `any` - utiliser `unknown` si nécessaire, puis typer correctement
+- Utiliser `ts-expect-error` ou `ts-ignore` uniquement en dernier recours avec un commentaire explicatif
+
+### Path Aliases
+
+- **TOUJOURS** utiliser les path aliases au lieu de chemins relatifs:
+  - `~/components/*` au lieu de `../components/*`
+  - `~/lib/*` au lieu de `../lib/*`
+  - `~/hooks/*` au lieu de `../hooks/*`
+  - `~/routes/*` au lieu de `../routes/*`
+- Alias définis dans `tsconfig.json`: `~/*` → `./src/*`
+
+## 🗄️ Type Safety avec Drizzle ORM
+
+### Types de Base de Données
+
+- **TOUJOURS** utiliser les types inférés depuis Drizzle:
+  ```typescript
+  import type { DrizzlePatate, DrizzleUser } from "~/lib/server/patate/types";
+  // OU
+  import type { Patate, User } from "~/types";
+  ```
+- Ne jamais créer de types manuels pour les entités de base de données
+- Utiliser `InferSelectModel` et `InferInsertModel` depuis drizzle-orm si nécessaire
+- Les types sont centralisés dans `src/types.ts` et `src/lib/server/patate/types.ts`
+
+### Schémas Drizzle
+
+- Utiliser `snake_case` pour les noms de colonnes (configuré dans `drizzle.config.ts`)
+- Les schémas doivent être dans `src/lib/db/schema/`
+- Toujours exporter les types depuis les schémas quand nécessaire
+
+## ⚛️ Patterns React
+
+### Composants Fonctionnels
+
+- Utiliser exclusivement des composants fonctionnels avec TypeScript
+- Typage explicite des props avec `React.ComponentProps` ou interfaces dédiées:
+  ```typescript
+  function Button({
+    className,
+    variant,
+    size,
+    ...props
+  }: React.ComponentProps<"button"> & VariantProps<typeof buttonVariants>) {
+    // ...
+  }
+  ```
+- Utiliser `React.FC` seulement si nécessaire (généralement éviter)
+
+### React Compiler
+
+- Le React Compiler est activé (babel-plugin-react-compiler)
+- Ne pas utiliser `useMemo`, `useCallback` sauf si vraiment nécessaire
+- Le compilateur optimise automatiquement
+
+### Hooks Personnalisés
+
+- Créer dans `src/hooks/`
+- Préfixer avec `use` (ex: `usePatate`, `useAuth`)
+- Toujours typer le retour avec TypeScript
+
+## 🎨 Composants UI (shadcn/ui)
+
+### Structure des Composants
+
+- Les composants UI dans `src/components/ui/`
+- Utiliser `cn()` depuis `~/lib/utils` pour fusionner les classes Tailwind
+- Utiliser `class-variance-authority` (cva) pour les variantes de composants
+- Exemple de pattern:
+
+  ```typescript
+  import { cva, type VariantProps } from "class-variance-authority";
+  import { cn } from "~/lib/utils";
+
+  const buttonVariants = cva(
+    "base-classes",
+    {
+      variants: {
+        variant: { default: "...", destructive: "..." },
+        size: { default: "...", sm: "..." }
+      },
+      defaultVariants: { variant: "default", size: "default" }
+    }
+  );
+
+  function Button({
+    className,
+    variant,
+    size,
+    ...props
+  }: React.ComponentProps<"button"> & VariantProps<typeof buttonVariants>) {
+    return (
+      <button
+        className={cn(buttonVariants({ variant, size, className }))}
+        {...props}
+      />
+    );
+  }
+  ```
+
+### Tailwind CSS
+
+- Utiliser Tailwind CSS v4 avec variables CSS
+- Les couleurs sont définies dans `src/styles.css` avec support dark mode
+- Ne jamais modifier les couleurs directement dans les composants - utiliser les variables CSS
+- Utiliser les classes utilitaires Tailwind, éviter le CSS inline
+
+## 🛣️ TanStack Router
+
+### Conventions de Nommage des Fichiers de Routes
+
+TanStack Router utilise un système de nommage basé sur les fichiers pour générer automatiquement les routes. **TOUJOURS** suivre ces conventions :
+
+#### Structure de Base
+
+- **Répertoire des routes** : `src/routes/` (obligatoire)
+- **Route racine** : `src/routes/__root.tsx` (double underscore `__`)
+- **Route index** : `src/routes/index.tsx` (correspond à `/`)
+- **Fichier router** : `src/router.tsx` (obligatoire, exporte `getRouter()`)
+- **Fichier généré** : `src/routeTree.gen.ts` (automatique, ne jamais modifier)
+
+#### Routes Statiques
+
+- **Route simple** : `about.tsx` → `/about`
+- **Route imbriquée** : `posts.tsx` → `/posts`
+- **Route dans dossier** : `dashboard/index.tsx` → `/dashboard/`
+
+#### Routes Dynamiques
+
+- **Paramètre dynamique** : `$paramName.tsx` (préfixe `$` obligatoire)
+  - Exemple : `posts/$postId.tsx` → `/posts/:postId`
+  - Exemple : `users/$id/posts/$postId.tsx` → `/users/:id/posts/:postId`
+  - Accès : `params.postId` ou `params.id` dans le composant
+
+- **Route splat/wildcard** : `$.tsx` ou `/$` (dollar sign trailing)
+  - Exemple : `api/file/$.ts` → `/api/file/*`
+  - Exemple : `api/auth/$` → `/api/auth/*`
+  - Accès : `params._splat` dans le handler
+
+#### Routes de Groupe (Layout Routes)
+
+- **Syntaxe** : `(groupName)/route.tsx` (parenthèses autour du nom)
+- Les parenthèses sont **ignorées** dans l'URL mais créent une route de layout
+- Exemples :
+  - `(authenticated)/route.tsx` → route layout pour les pages authentifiées
+  - `(authenticated)/dashboard/index.tsx` → `/dashboard`
+  - `(auth-pages)/login.tsx` → `/login`
+  - `(auth-pages)/signup.tsx` → `/signup`
+
+#### Routes API
+
+- **Routes API** : `api/routeName.ts` ou `api/routeName.tsx`
+- Exemple : `api/users.ts` → `/api/users`
+- Utiliser `server.handlers` pour définir les méthodes HTTP
+
+#### Conventions de Nommage des Fichiers
+
+- **Fichiers de routes** : kebab-case ou camelCase (ex: `user-profile.tsx`, `postDetail.tsx`)
+- **Extensions** :
+  - `.tsx` pour les routes avec composants React
+  - `.ts` pour les routes API uniquement (sans composant)
+- **Noms de fichiers** :
+  - Pas d'espaces
+  - Pas de caractères spéciaux sauf `$`, `(`, `)`, `-`, `_`
+  - Utiliser des noms descriptifs et en anglais
+
+#### Exemples de Structure Complète
+
+```
+src/routes/
+├── __root.tsx                    # Route racine (obligatoire)
+├── index.tsx                     # Route "/"
+├── about.tsx                     # Route "/about"
+├── (authenticated)/              # Groupe de routes authentifiées
+│   ├── route.tsx                 # Layout route (sans URL)
+│   ├── dashboard/
+│   │   ├── route.tsx             # Layout "/dashboard"
+│   │   └── index.tsx             # Route "/dashboard/"
+│   └── settings/
+│       ├── route.tsx
+│       └── $tab.tsx              # Route "/settings/:tab"
+├── (auth-pages)/                 # Groupe de routes d'authentification
+│   ├── route.tsx
+│   ├── login.tsx                 # Route "/login"
+│   └── signup.tsx                # Route "/signup"
+├── posts/
+│   ├── index.tsx                 # Route "/posts"
+│   └── $postId.tsx               # Route "/posts/:postId"
+└── api/
+    ├── users.ts                  # Route API "/api/users"
+    └── auth/$                    # Route API "/api/auth/*"
+```
+
+### Routes
+
+- Les routes sont dans `src/routes/`
+- Utiliser `createFileRoute` pour créer les routes:
+
+  ```typescript
+  import { createFileRoute } from "@tanstack/react-router";
+
+  export const Route = createFileRoute("/path")({
+    component: Component,
+    // ...
+  });
+  ```
+
+- Utiliser `createRootRouteWithContext` pour la route racine avec contexte typé:
+  ```typescript
+  export const Route = createRootRouteWithContext<{
+    queryClient: QueryClient;
+    user: AuthQueryResult;
+  }>()({
+    // ...
+  });
+  ```
+
+### Route Context et beforeLoad
+
+- Utiliser `beforeLoad` pour l'authentification et le prefetching:
+  ```typescript
+  export const Route = createFileRoute("/(authenticated)")({
+    beforeLoad: async ({ context }) => {
+      const user = await context.queryClient.ensureQueryData({
+        ...authQueryOptions(),
+        revalidateIfStale: true,
+      });
+      if (!user) {
+        throw redirect({ to: "/login" });
+      }
+      return { user };
+    },
+  });
+  ```
+- Accéder au contexte dans les composants avec `Route.useRouteContext()`
+- Typez toujours le contexte retourné par `beforeLoad`
+
+### Patterns et Meilleures Pratiques
+
+#### Routes avec Layout
+
+- Créer un fichier `route.tsx` dans chaque dossier pour définir un layout :
+
+  ```typescript
+  // src/routes/dashboard/route.tsx
+  export const Route = createFileRoute("/dashboard")({
+    component: DashboardLayout,
+  });
+
+  function DashboardLayout() {
+    return (
+      <div>
+        <Sidebar />
+        <Outlet /> {/* Rend les routes enfants */}
+      </div>
+    );
+  }
+  ```
+
+#### Routes avec Paramètres Dynamiques
+
+- Toujours typer les paramètres dans `createFileRoute` :
+
+  ```typescript
+  // src/routes/posts/$postId.tsx
+  export const Route = createFileRoute("/posts/$postId")({
+    loader: async ({ params }) => {
+      // params.postId est typé automatiquement
+      return fetchPost(params.postId);
+    },
+    component: PostComponent,
+  });
+
+  function PostComponent() {
+    const { postId } = Route.useParams(); // Typé automatiquement
+    const post = Route.useLoaderData();
+    return <div>{post.title}</div>;
+  }
+  ```
+
+#### Routes API avec Handlers
+
+- Utiliser `server.handlers` pour les routes API :
+  ```typescript
+  // src/routes/api/users/$id.ts
+  export const Route = createFileRoute("/api/users/$id")({
+    server: {
+      handlers: {
+        GET: async ({ params }) => {
+          const user = await db.users.findById(params.id);
+          return json(user);
+        },
+        DELETE: async ({ params }) => {
+          await db.users.delete(params.id);
+          return new Response(null, { status: 204 });
+        },
+      },
+    },
+  });
+  ```
+
+#### Routes de Groupe pour Organisation
+
+- Utiliser les groupes pour organiser les routes par fonctionnalité :
+  - `(authenticated)/` : Routes nécessitant une authentification
+  - `(auth-pages)/` : Pages de connexion/inscription
+  - `(admin)/` : Routes administratives
+  - Les groupes n'apparaissent pas dans l'URL mais permettent de partager des layouts
+
+#### Anti-Patterns à Éviter
+
+- ❌ Ne pas créer de routes avec des caractères spéciaux non supportés (`@`, `#`, `%`, etc.)
+- ❌ Ne pas mélanger les conventions (ex: `$post-id.tsx` au lieu de `$postId.tsx`)
+- ❌ Ne pas modifier `routeTree.gen.ts` (fichier généré automatiquement)
+- ❌ Ne pas créer de routes avec des noms qui entrent en conflit avec les conventions spéciales
+- ❌ Ne pas utiliser de chemins relatifs dans les imports des routes (utiliser les path aliases `~/`)
+
+#### Single Route Files & Collocation
+
+- Préférer les routes plates quand il n'y a pas de layout dédié : `src/routes/(authenticated)/patates.index.tsx`, `patates.create.tsx`, `patates.$patateId.tsx`, etc. (TanStack Router reconnait le `.` comme un niveau de nesting [docs](https://tanstack.com/start/latest/docs/framework/react/guide/routing)).
+- Si un layout est nécessaire, ajouter un dossier avec `route.tsx` pour le layout parent et conserver les sous-fichiers plats.
+- Collocaliser la logique associée : `queries`, `loader`, `schema`, un dossier `server/` pour les server functions, et un dossier `hooks/` pour les hooks/queries partagés (`patates/hooks/usePatateQueryOptions.ts`, `patates/hooks/index.ts`, etc.).
+- Préfixer/suffixer clairement les fonctions serveur : `createPatateServerFunction`, `listPatatesServerFunction`, `getPatateByIdServerFunction`.
+- Les composants et hooks clients importent uniquement ces fonctions via `useServerFn` et les helpers du dossier de la route concernée.
+
+### Data Fetching
+
+- Utiliser TanStack Query avec les loaders TanStack Router
+- Les queries doivent être typées avec les types Drizzle
+- Utiliser `ensureQueryData` ou `prefetchQuery` dans `beforeLoad`
+- Configuration par défaut dans `src/router.tsx`:
+  - `refetchOnWindowFocus: false`
+  - `staleTime: 1000 * 60 * 2` (2 minutes)
+
+### Routes API
+
+- Les routes API utilisent `server.handlers`:
+  ```typescript
+  export const Route = createFileRoute("/api/auth/$")({
+    server: {
+      handlers: {
+        GET: ({ request }) => auth.handler(request),
+        POST: ({ request }) => auth.handler(request),
+      },
+    },
+  });
+  ```
+
+## 🔐 Authentification
+
+### Better Auth
+
+- La configuration auth est dans `src/lib/auth/`
+- Utiliser les types depuis Better Auth
+- Les schémas auth sont générés via `pnpm auth:generate`
+- Côté client, toujours passer par `authClient` (`authClient.useSession()`, `authClient.signIn.*`, `authClient.signOut`) et **jamais** `auth.api.*`
+- Côté serveur, exposer les besoins via des `createServerFn` dédiées (ex: `~/lib/auth/functions.ts#getUser`) pour pouvoir les appeler depuis les routes ou `beforeLoad`
+
+  ```typescript
+  import { createServerFn } from "@tanstack/react-start";
+  import { getRequest } from "@tanstack/react-start/server";
+
+  import { auth } from "~/lib/auth/auth";
+
+  export const getUser = createServerFn({ method: "GET" }).handler(async () => {
+    const session = await auth.api.getSession({ headers: getRequest().headers });
+    return session?.user ?? null;
+  });
+  ```
+
+- Ne pas importer `@tanstack/react-start/server` directement dans des modules rendus côté client (composants React, hooks). Passer par les helpers `createServerFn` pour éviter de tirer les bundles serveur dans le client.
+
+## 🖥️ Server Functions
+
+### Fonctions Serveur avec createServerFn
+
+- Regrouper les fonctions serveur avec la route qui les consomme (`src/routes/.../route.tsx` + `page.tsx` + dossier `server/` à la racine de la feature). Créer un fichier par action (`createPatate.serverFunction.ts`, `listPatates.serverFunction.ts`, etc.) dans ce dossier `server/`.
+- **TOUJOURS** utiliser `inputValidator` pour valider les données d'entrée
+- Utiliser Zod pour la validation des schémas (recommandé) ou un validateur de type simple
+- Les fonctions POST doivent utiliser `.inputValidator()` avant `.handler()`
+- Les fonctions GET peuvent recevoir des options comme `{ signal }` pour les queries
+
+#### Pattern de Base
+
+```typescript
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+
+// Fonction GET simple
+export const $getData = createServerFn({ method: "GET" }).handler(async () => {
+  return { message: "Hello from server!" };
+});
+
+// Fonction POST avec validation Zod
+const CreateSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+});
+
+export const $createData = createServerFn({ method: "POST" })
+  .inputValidator(CreateSchema)
+  .handler(async ({ data }) => {
+    // data est typé et validé automatiquement
+    return { success: true };
+  });
+```
+
+#### Validation avec Zod (Recommandé)
+
+- **TOUJOURS** utiliser Zod pour valider les données d'entrée des fonctions POST
+- Exporter le schéma Zod pour réutilisation et génération de types
+- Utiliser `z.infer<typeof Schema>` pour générer le type TypeScript
+
+```typescript
+import { z } from "zod";
+
+// Définir le schéma
+export const CreateUserSchema = z.object({
+  name: z.string().min(1, "Le nom est requis"),
+  email: z.string().email("Email invalide"),
+  age: z.number().min(0).max(120),
+});
+
+// Générer le type depuis le schéma
+export type CreateUserInput = z.infer<typeof CreateUserSchema>;
+
+// Utiliser dans la fonction serveur
+export const $createUser = createServerFn({ method: "POST" })
+  .inputValidator(CreateUserSchema)
+  .handler(async ({ data }) => {
+    // data est typé comme CreateUserInput
+    return await db.users.create(data);
+  });
+```
+
+#### Validation Simple (Alternative)
+
+- Pour des cas simples, utiliser un validateur de type fonction
+
+```typescript
+export const $greetUser = createServerFn({ method: "GET" })
+  .inputValidator((data: { name: string }) => data)
+  .handler(async ({ data }) => {
+    return `Hello, ${data.name}!`;
+  });
+```
+
+#### Utilisation dans les Composants
+
+- Utiliser `useServerFn` pour appeler les fonctions serveur dans les composants
+- Toujours passer les données dans `{ data: ... }` pour les fonctions POST
+- Gérer les erreurs avec try/catch
+
+```typescript
+import { useServerFn } from "@tanstack/react-start";
+import { $createUser } from "~/lib/server/users/functions";
+
+function UserForm() {
+  const createUserFn = useServerFn($createUser);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createUserFn({
+        data: {
+          name: "John",
+          email: "john@example.com",
+        },
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    }
+  };
+}
+```
+
+#### Fonctions GET avec Options
+
+- Les fonctions GET peuvent recevoir des options comme `signal` pour les queries
+
+```typescript
+export const $getUser = createServerFn({ method: "GET" }).handler(async () => {
+  return session?.user || null;
+});
+
+// Utilisation dans une query
+const { data } = useQuery({
+  queryKey: ["user"],
+  queryFn: ({ signal }) => $getUser({ signal }),
+});
+```
+
+#### Fonctions GET avec Paramètres
+
+- Utiliser `inputValidator` pour les fonctions GET qui acceptent des paramètres
+
+```typescript
+const GetByIdSchema = z.object({
+  id: z.coerce.number(),
+});
+
+export const $getById = createServerFn({ method: "GET" })
+  .inputValidator(GetByIdSchema)
+  .handler(async ({ data }) => {
+    return await db.findById(data.id);
+  });
+
+// Utilisation
+const item = await $getById({ data: { id: 123 } });
+```
+
+#### createServerOnlyFn
+
+- Utiliser `createServerOnlyFn` pour les fonctions uniquement serveur (ex: connexion DB)
+- Ces fonctions ne peuvent pas être appelées depuis le client
+
+```typescript
+import { createServerOnlyFn } from "@tanstack/react-start";
+
+const getDatabase = createServerOnlyFn(() =>
+  drizzle({ client: driver, schema, casing: "snake_case" }),
+);
+
+export const db = getDatabase();
+```
+
+#### Middleware
+
+- Utiliser `.middleware()` pour ajouter des middlewares aux fonctions serveur
+- Les middlewares peuvent valider, logger, authentifier, etc.
+
+```typescript
+import { createServerFn } from "@tanstack/react-start";
+import { authMiddleware } from "~/lib/auth/middleware";
+
+export const $getProtectedData = createServerFn()
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    // context.user est disponible grâce au middleware
+    return { message: `Hello ${context.user.name}` };
+  });
+```
+
+#### Gestion des Erreurs
+
+- Les erreurs sont automatiquement sérialisées et propagées au client
+- Utiliser des messages d'erreur clairs et descriptifs
+- Utiliser `notFound()` pour les ressources non trouvées
+
+```typescript
+import { notFound } from "@tanstack/react-router";
+
+export const $getPost = createServerFn()
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    const post = await db.findPost(data.id);
+    if (!post) {
+      throw notFound();
+    }
+    return post;
+  });
+```
+
+#### Best Practices
+
+- ✅ **TOUJOURS** valider les entrées avec `inputValidator` (Zod recommandé)
+- ✅ Exporter les schémas Zod pour réutilisation
+- ✅ Utiliser `z.infer<typeof Schema>` pour générer les types
+- ✅ Utiliser `useServerFn` dans les composants au lieu d'appeler directement
+- ✅ Gérer les erreurs avec try/catch dans les composants
+- ✅ Utiliser des messages d'erreur descriptifs
+- ✅ Typage explicite des entrées et sorties
+- ✅ Tester les fonctions serveur avec des données valides et invalides
+
+#### Anti-Patterns à Éviter
+
+- ❌ Ne pas utiliser `createServerFn` sans validation pour les fonctions POST
+- ❌ Ne pas créer de fonctions serveur sans gestion d'erreur
+- ❌ Ne pas utiliser `createServerOnlyFn` pour les fonctions appelables depuis le client
+- ❌ Ne pas oublier de passer les données dans `{ data: ... }` pour les fonctions POST
+- ❌ Ne pas définir les types manuellement quand Zod peut les générer
+- ❌ Ne pas exposer les variables d'environnement directement (utiliser `createServerOnlyFn`)
+
+## 🔐 Variables d'Environnement
+
+### Validation avec @t3-oss/env-core
+
+- Les variables d'environnement sont validées avec Zod via `@t3-oss/env-core`
+- Variables serveur dans `src/env/server.ts`:
+
+  ```typescript
+  import { createEnv } from "@t3-oss/env-core";
+  import * as z from "zod";
+
+  export const env = createEnv({
+    server: {
+      DATABASE_URL: z.url(),
+      BETTER_AUTH_SECRET: z.string().min(1),
+      // ...
+    },
+    runtimeEnv: process.env,
+  });
+  ```
+
+- Variables client dans `src/env/client.ts` avec préfixe `VITE_`:
+  ```typescript
+  export const env = createEnv({
+    clientPrefix: "VITE_",
+    client: {
+      VITE_BASE_URL: z.url().default("http://localhost:3000"),
+    },
+    runtimeEnv: import.meta.env,
+  });
+  ```
+- Toujours utiliser `env` depuis ces fichiers au lieu de `process.env` directement
+- Toujours typer avec Zod les nouvelles variables d'environnement
+
+## 📦 Gestion des Dépendances
+
+### Package Manager
+
+- **TOUJOURS** utiliser `pnpm` (jamais npm ou yarn)
+- Commandes disponibles:
+  - `pnpm dev` - Développement
+  - `pnpm build` - Build production
+  - `pnpm check` - Format + Lint + Type check
+  - `pnpm db` - Drizzle Kit
+  - `pnpm ui` - shadcn CLI
+
+## 🎯 Formatage et Linting
+
+### Prettier
+
+- Tab width: 2 espaces
+- Print width: 90 caractères
+- Double quotes (pas de single quotes)
+- Semicolons obligatoires
+- Trailing commas: "all"
+- Plugins: organize-imports, tailwindcss
+
+### ESLint
+
+- Configuration dans `eslint.config.js`
+- Plugins activés:
+  - TypeScript ESLint
+  - React ESLint
+  - TanStack Query
+  - TanStack Router
+  - React Hooks
+- Suivre les règles recommandées
+
+## 🚨 Débogage Client / Server
+
+- **Signes avant-coureurs** : erreurs `Failed to fetch dynamically imported module`, `tanstack-start-injected-head-scripts:v`, `loadVirtualModule`, ou import d'un module `@tanstack/.../server` dans des fichiers `.tsx`/hooks
+- **Check-list rapide** :
+  - Vérifier que les fichiers destinés au client n'importent que des helpers RPC (`createServerFn`, `useServerFn`) ou des modules marqués `~/lib/server/**` via ces helpers.
+  - S'assurer que chaque route ou composant client utilise `authClient` et non `auth.api`.
+  - Observer les requêtes réseau Vite : un `500` sur `loadVirtualModule.js` ou `404` sur `#tanstack-start-server-fn-manifest` signale un mélange client/serveur.
+  - En cas d'erreur, réexécuter `pnpm dev --clearScreen=false` pour identifier le premier stacktrace côté serveur.
+- **Bon réflexe** : centraliser la logique serveur dans `~/lib/**/functions.ts` (via `createServerFn`) et n'exposer aux composants qu'une API typée.
+
+## 🚫 Anti-Patterns à Éviter
+
+### ❌ À NE PAS FAIRE:
+
+1. Utiliser des chemins relatifs (`../`, `../../`) - utiliser les path aliases
+2. Utiliser `any` - utiliser `unknown` et typer correctement
+3. Créer des types manuels pour les entités DB - utiliser Drizzle types
+4. Utiliser `@ts-ignore` sans commentaire explicatif
+5. Modifier les couleurs directement dans les composants - utiliser les variables CSS
+6. Utiliser npm/yarn au lieu de pnpm
+7. Oublier de typer les props de composants
+8. Créer des composants sans utiliser `cn()` pour les classes
+9. Utiliser `React.FC` sauf si nécessaire
+10. Créer des hooks sans préfixe `use`
+
+### ✅ BONNES PRATIQUES:
+
+1. Toujours typer explicitement les fonctions et composants
+2. Utiliser les types inférés depuis Drizzle
+3. Utiliser les path aliases pour tous les imports
+4. Suivre les patterns shadcn/ui pour les composants
+5. Utiliser TanStack Query pour toute la gestion d'état serveur
+6. Respecter le formatage Prettier (2 espaces, double quotes)
+7. Organiser les imports avec prettier-plugin-organize-imports
+8. Utiliser les variables CSS pour les couleurs
+9. Documenter les fonctions complexes avec JSDoc si nécessaire
+10. Vérifier les types avec `pnpm check-types` avant de commit
+
+## 📝 Conventions de Nommage
+
+- **Fichiers**: kebab-case pour les fichiers (ex: `default-catch-boundary.tsx`)
+- **Composants**: PascalCase (ex: `Button`, `AppSidebar`)
+- **Hooks**: camelCase avec préfixe `use` (ex: `usePatate`, `useAuth`)
+- **Types**: PascalCase (ex: `Patate`, `User`, `DrizzlePatate`)
+- **Variables/Fonctions**: camelCase (ex: `buttonVariants`, `getRouter`)
+- **Constantes**: UPPER_SNAKE_CASE (ex: `DATABASE_URL`)
+- **Base de données**: snake_case pour colonnes et tables
+
+## 🔍 Vérifications Avant Commit
+
+Toujours exécuter avant de commit:
+
+```bash
+pnpm check  # Format + Lint + Type check
+```
+
+Ou individuellement:
+
+```bash
+pnpm format      # Prettier
+pnpm lint        # ESLint
+pnpm check-types # TypeScript
+```
+
+## 🎨 Styles et Thèmes
+
+- Les couleurs sont définies dans `src/styles.css`
+- Support automatique du dark mode via `.dark` class
+- Variables CSS pour les couleurs thématiques (info, success, danger, warning)
+- Ne jamais hardcoder les couleurs dans les composants
+
+## 📚 Documentation
+
+- Les types complexes doivent être documentés avec JSDoc si nécessaire
+- Les fonctions serveur doivent avoir des types explicites
+- Les composants complexes doivent avoir des commentaires expliquant la logique
+
+## 🔌 Context7 MCP
+
+- Context7 MCP est configuré pour fournir une documentation à jour
+- Utiliser `use context7` dans les prompts pour accéder à Context7
+- Voir `CONTEXT7_MCP_SETUP.md` pour la configuration détaillée
+
+---
+
+**Rappel**: Ce projet privilégie la type safety et la maintenabilité. Toujours typer explicitement et utiliser les outils TypeScript pour garantir la sécurité des types.

@@ -16,6 +16,7 @@ import appCss from "~/styles.css?url";
 
 import { ThemeProvider } from "~/components/theme-provider";
 import { Toaster } from "~/components/ui/sonner";
+import Layout from "~/layout";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -24,6 +25,11 @@ export const Route = createRootRouteWithContext<{
   beforeLoad: ({ context }) => {
     // we're using react-query for client-side caching to reduce client-to-server calls, see /src/router.tsx
     // better-auth's cookieCache is also enabled server-side to reduce server-to-db calls, see /src/lib/auth/auth.ts
+    // ⚠️ Nous préchargeons uniquement la session ici mais nous ne retournons
+    // pas `{ user }`, donc `context.user` reste `null` pour cette branche.
+    // Les routes qui veulent un user non-null devront soit :
+    //   1. retourner `{ user }` depuis leur propre `beforeLoad`, ou
+    //   2. lire la session via `context.queryClient.ensureQueryData(...)`.
     context.queryClient.prefetchQuery(authQueryOptions());
 
     // typically we don't need the user immediately in landing pages,
@@ -63,14 +69,16 @@ function RootComponent() {
 function RootDocument({ children }: { readonly children: React.ReactNode }) {
   return (
     // suppress since we're updating the "dark" class in ThemeProvider
-    <html lang="en" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
         <ThemeProvider>
-          {children}
-          <Toaster richColors />
+          <Layout>
+            {children}
+            <Toaster richColors />
+          </Layout>
         </ThemeProvider>
 
         <TanStackDevtools

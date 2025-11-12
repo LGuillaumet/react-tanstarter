@@ -18,6 +18,10 @@ export function getRouter() {
 
   const router = createRouter({
     routeTree,
+    // `user` démarre à `null` ici et sera complété par les `beforeLoad`
+    // (ex: `__root.tsx` ou `/(authenticated)/route.tsx`) qui retournent
+    // explicitement `{ user }`. Ainsi, les routes publiques ne déclenchent
+    // pas d'appel bloquant tant qu'elles n'en ont pas besoin.
     context: { queryClient, user: null },
     defaultPreload: "intent",
     // react-query will handle data fetching & caching

@@ -4,6 +4,30 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer base {
+  :root {
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+  }
+
+  .dark {
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.439 0 0);
+  }
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -40,6 +64,14 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
 }
 
 :root {
@@ -75,6 +107,26 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+  /* Info colors (Bleu) */
+  --info-lighter: oklch(0.95 0.05 240);
+  --info: oklch(0.65 0.15 240);
+  --info-darker: oklch(0.45 0.2 240);
+  --info-foreground: oklch(0.98 0 0);
+  /* Success colors (Vert) */
+  --success-lighter: oklch(0.95 0.08 150);
+  --success: oklch(0.65 0.18 150);
+  --success-darker: oklch(0.45 0.2 150);
+  --success-foreground: oklch(0.98 0 0);
+  /* Danger colors (Rouge) */
+  --danger-lighter: oklch(0.95 0.08 25);
+  --danger: oklch(0.65 0.22 25);
+  --danger-darker: oklch(0.45 0.25 25);
+  --danger-foreground: oklch(0.98 0 0);
+  /* Warning colors (Jaune) */
+  --warning-lighter: oklch(0.95 0.08 85);
+  --warning: oklch(0.75 0.18 85);
+  --warning-darker: oklch(0.55 0.2 85);
+  --warning-foreground: oklch(0.2 0 0);
 }
 
 .dark {
@@ -109,6 +161,26 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+  /* Info colors (Bleu) - Dark mode */
+  --info-lighter: oklch(0.55 0.18 240);
+  --info: oklch(0.6 0.2 240);
+  --info-darker: oklch(0.35 0.15 240);
+  --info-foreground: oklch(0.98 0 0);
+  /* Success colors (Vert) - Dark mode */
+  --success-lighter: oklch(0.55 0.2 150);
+  --success: oklch(0.6 0.22 150);
+  --success-darker: oklch(0.35 0.18 150);
+  --success-foreground: oklch(0.98 0 0);
+  /* Danger colors (Rouge) - Dark mode */
+  --danger-lighter: oklch(0.6 0.2 25);
+  --danger: oklch(0.7 0.19 22);
+  --danger-darker: oklch(0.4 0.22 25);
+  --danger-foreground: oklch(0.98 0 0);
+  /* Warning colors (Jaune) - Dark mode */
+  --warning-lighter: oklch(0.7 0.15 85);
+  --warning: oklch(0.75 0.18 85);
+  --warning-darker: oklch(0.5 0.16 85);
+  --warning-foreground: oklch(0.15 0 0);
 }
 
 @layer base {

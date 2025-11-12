@@ -2,9 +2,10 @@ import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
+  discordId: text("discord_id").unique(), // Champ Discord ID unique renommé
   name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").default(false).notNull(),
+  email: text("email").unique(), // Retiré notNull() pour rendre optionnel
+  emailVerified: boolean("email_verified"), // Également optionnel car pas d'email = pas de vérification
   image: text("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")

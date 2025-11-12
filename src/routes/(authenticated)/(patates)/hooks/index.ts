@@ -1,0 +1,1 @@
+export { patateQueryOptions } from "./usePatateQueryOptions";

@@ -59,6 +59,9 @@ function HomePage() {
 }
 
 function UserAction() {
+  // Cette route publique n'étant pas dans `/(authenticated)`, elle ne reçoit
+  // pas automatiquement de `context.user`. On s'appuie donc sur la requête
+  // React Query préchargée par `__root.beforeLoad` pour récupérer l'utilisateur.
   const { data: user } = useSuspenseQuery(authQueryOptions());
 
   return user ? (

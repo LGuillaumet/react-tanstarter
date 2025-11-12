@@ -5,6 +5,8 @@ import { reactStartCookies } from "better-auth/react-start";
 
 import { env } from "~/env/server";
 import { db } from "~/lib/db";
+import * as schema from "~/lib/db/schema";
+import { getUserAvatar } from "~/lib/user";
 
 const getAuthConfig = createServerOnlyFn(() =>
   betterAuth({
@@ -14,6 +16,7 @@ const getAuthConfig = createServerOnlyFn(() =>
     },
     database: drizzleAdapter(db, {
       provider: "pg",
+      schema,
     }),
 
     // https://www.better-auth.com/docs/integrations/tanstack#usage-tips
@@ -23,25 +26,47 @@ const getAuthConfig = createServerOnlyFn(() =>
     session: {
       cookieCache: {
         enabled: true,
-        maxAge: 5 * 60, // 5 minutes
+        maxAge: 6 * 60 * 60, // 6 heures
+      },
+    },
+
+    user: {
+      additionalFields: {
+        discordId: {
+          type: "string",
+          required: true,
+          unique: true,
+          input: false,
+        },
       },
     },
 
     // https://www.better-auth.com/docs/concepts/oauth
     socialProviders: {
-      github: {
-        clientId: env.GITHUB_CLIENT_ID!,
-        clientSecret: env.GITHUB_CLIENT_SECRET!,
-      },
-      google: {
-        clientId: env.GOOGLE_CLIENT_ID!,
-        clientSecret: env.GOOGLE_CLIENT_SECRET!,
+      discord: {
+        clientId: process.env.DISCORD_CLIENT_ID!,
+        clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+        disableDefaultScope: true,
+        overrideUserInfoOnSignIn: true,
+        prompt: "consent",
+        scope: ["identify", "guilds"],
+        mapProfileToUser: async (profile) => {
+          const discordAvatarUrl = profile.avatar
+            ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+            : null;
+          return {
+            email: profile.id + "@fake-discord-email.com",
+            name: profile.username,
+            image: getUserAvatar(discordAvatarUrl),
+            discordId: profile.id,
+          };
+        },
       },
     },
 
     // https://www.better-auth.com/docs/authentication/email-password
     emailAndPassword: {
-      enabled: true,
+      enabled: false,
     },
   }),
 );
