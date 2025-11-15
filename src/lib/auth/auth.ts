@@ -6,6 +6,7 @@ import { reactStartCookies } from "better-auth/react-start";
 import { env } from "~/env/server";
 import { db } from "~/lib/db";
 import * as schema from "~/lib/db/schema";
+import { discordService } from "~/lib/services/discordService";
 import { getUserAvatar } from "~/lib/user";
 
 const getAuthConfig = createServerOnlyFn(() =>
@@ -51,9 +52,11 @@ const getAuthConfig = createServerOnlyFn(() =>
         prompt: "consent",
         scope: ["identify", "guilds"],
         mapProfileToUser: async (profile) => {
-          const discordAvatarUrl = profile.avatar
-            ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
-            : null;
+          const discordAvatarUrl = discordService.getDiscordUserAvatarUrl({
+            userId: profile.id,
+            avatarId: profile.avatar,
+            size: 256,
+          });
           return {
             email: profile.id + "@fake-discord-email.com",
             name: profile.username,

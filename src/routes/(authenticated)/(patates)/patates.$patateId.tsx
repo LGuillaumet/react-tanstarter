@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { Link, createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import {
@@ -13,22 +13,67 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { discordService } from "~/lib/services/discordService";
 import { Route as AuthenticatedRoute } from "~/routes/(authenticated)/route";
+import type { DiscordGuild, PatateWithCreator } from "~/types";
 import { patateQueryOptions } from "./hooks";
 import { deletePatateServerFunction } from "./server/deletePatate.serverFunction";
+import { getDiscordGuildServerFunction } from "./server/getDiscordGuild.serverFunction";
+
+type PatateDetailLoaderData = {
+  patate: PatateWithCreator;
+  discordServer: DiscordGuild | null;
+};
 
 export const Route = createFileRoute("/(authenticated)/(patates)/patates/$patateId")({
   component: PatateDetailPage,
+  loader: async ({ params, context }) => {
+    try {
+      const patateId = Number(params.patateId);
+      if (isNaN(patateId)) {
+        throw new Error("Invalid patate ID");
+      }
+      const patate = await context.queryClient.ensureQueryData(
+        patateQueryOptions.getPatateById(patateId),
+      );
+
+      if (!patate) {
+        throw new Error("Patate not found");
+      }
+
+      let discordServer: DiscordGuild | null = null;
+      try {
+        if (patate.discordServerId) {
+          discordServer = await getDiscordGuildServerFunction({
+            data: { guildId: patate.discordServerId },
+          });
+        }
+      } catch (discordError) {
+        console.error("Failed to load Discord server info", discordError);
+      }
+
+      return {
+        patate,
+        discordServer,
+      };
+    } catch (error) {
+      console.error(error);
+      throw notFound({ routeId: "/(authenticated)/(patates)/patates/$patateId" });
+    }
+  },
 });
 
 function PatateDetailPage() {
   const { user } = AuthenticatedRoute.useRouteContext();
+  const { discordServer } = Route.useLoaderData() as PatateDetailLoaderData;
   const { patateId } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const deletePatateFn = useServerFn(deletePatateServerFunction);
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -37,59 +82,22 @@ function PatateDetailPage() {
   const isValidPatateId = Number.isFinite(parsedPatateId);
   const safePatateId = isValidPatateId ? parsedPatateId : 0;
 
-  const detailQueryOptions = patateQueryOptions.detail(safePatateId);
-  const {
-    data: patate,
-    isLoading,
-    error,
-  } = useQuery({
-    ...detailQueryOptions,
-    enabled: isValidPatateId,
-  });
-
-  if (!user) {
-    return null;
-  }
-
-  if (!isValidPatateId) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="bg-destructive/10 text-destructive rounded-md p-4 text-sm">
-          Identifiant de patate invalide.
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="text-muted-foreground text-center text-sm">
-          Chargement de la patate...
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="bg-destructive/10 text-destructive rounded-md p-4 text-sm">
-          Erreur lors du chargement : {error.message}
-        </div>
-      </div>
-    );
-  }
-
-  if (!patate) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="text-muted-foreground rounded-md border border-dashed p-12 text-center text-sm">
-          Patate introuvable.
-        </div>
-      </div>
-    );
-  }
+  const { data: patate } = useSuspenseQuery(
+    patateQueryOptions.getPatateById(safePatateId),
+  );
+  const patateCreator = patate.creator;
+  const creatorDisplayName = patateCreator.name ?? "Utilisateur inconnu";
+  const creatorInitial = creatorDisplayName.trim().charAt(0).toUpperCase() || "?";
+  const discordServerDisplayName =
+    discordServer?.name ??
+    (patate.discordServerId ? `Serveur ${patate.discordServerId}` : "Serveur Discord");
+  const discordServerIconUrl =
+    discordService.getDiscordServerIconUrl({
+      guildId: patate.discordServerId ?? null,
+      iconId: discordServer?.icon ?? null,
+      size: 96,
+    }) ?? undefined;
+  const discordServerInitial = discordServerDisplayName.charAt(0).toUpperCase() || "?";
 
   return (
     <div className="container mx-auto max-w-3xl py-8">
@@ -181,22 +189,48 @@ function PatateDetailPage() {
           </section>
         ) : null}
 
-        {patate.rules ? (
-          <section>
-            <h2 className="text-lg font-semibold">Règles</h2>
-            <p className="text-muted-foreground mt-2 whitespace-pre-wrap">
-              {patate.rules}
-            </p>
-          </section>
-        ) : null}
+        <section>
+          <h2 className="text-lg font-semibold">Règles</h2>
+          <p className="text-muted-foreground mt-2 whitespace-pre-wrap">
+            {patate.rules ?? "Aucune règle définie"}
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold">Créateur</h2>
+          <div className="mt-3 flex items-center gap-4">
+            <Avatar className="h-14 w-14">
+              <AvatarImage
+                src={patateCreator.image ?? undefined}
+                alt={creatorDisplayName}
+              />
+              <AvatarFallback>{creatorInitial}</AvatarFallback>
+            </Avatar>
+            <div className="text-muted-foreground space-y-1 text-sm whitespace-pre-wrap">
+              <p className="text-foreground text-base font-medium">
+                {creatorDisplayName}
+              </p>
+              <p>Discord ID : {patateCreator.discordId ?? "Inconnu"}</p>
+            </div>
+          </div>
+        </section>
 
         <section className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border p-4">
             <h3 className="text-muted-foreground text-sm font-medium">Discord</h3>
-            <div className="mt-2 space-y-1 text-sm">
-              <div>
-                <span className="font-semibold">Serveur :</span> {patate.discordServerId}
+            <div className="mt-4 flex items-center gap-4">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={discordServerIconUrl} alt={discordServerDisplayName} />
+                <AvatarFallback>{discordServerInitial}</AvatarFallback>
+              </Avatar>
+              <div className="space-y-1 text-sm">
+                <p className="text-base font-semibold">{discordServerDisplayName}</p>
+                <p className="text-muted-foreground text-xs">
+                  ID serveur : {patate.discordServerId}
+                </p>
               </div>
+            </div>
+            <div className="mt-4 space-y-1 text-sm">
               <div>
                 <span className="font-semibold">Canal :</span>{" "}
                 {patate.discordChannelId ?? "Non défini"}

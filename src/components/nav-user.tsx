@@ -1,5 +1,6 @@
-import { Bell, ChevronsUpDown, LogOut } from "lucide-react";
+import { Bell, ChevronsUpDown } from "lucide-react";
 
+import { SignOutButton } from "~/components/sign-out-button";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
   DropdownMenu,
@@ -74,8 +75,7 @@ export function NavUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <LogOut />
-              Log out
+              <SignOutButton />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
