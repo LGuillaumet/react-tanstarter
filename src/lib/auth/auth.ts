@@ -39,6 +39,12 @@ const getAuthConfig = createServerOnlyFn(() =>
           unique: true,
           input: false,
         },
+        role: {
+          type: "string",
+          required: true,
+          defaultValue: "user",
+          input: false,
+        },
       },
     },
 

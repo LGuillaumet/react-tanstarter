@@ -8,7 +8,6 @@ export default {
   verbose: true,
   strict: true,
   dialect: "postgresql",
-  casing: "snake_case",
   dbCredentials: {
     url: env.DATABASE_URL,
   },

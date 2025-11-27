@@ -17,13 +17,14 @@ import {
 } from "~/components/ui/sidebar";
 
 import { Link } from "@tanstack/react-router";
-import { HomeIcon, ListIcon, PlusCircleIcon } from "lucide-react";
+import { HomeIcon, ListIcon, PlusCircleIcon, SettingsIcon } from "lucide-react";
 import { DiscordSignInButton } from "~/components/sign-in-button";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { useAuth } from "~/lib/auth/hooks";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: user } = useAuth();
+  const isAdmin = (user as any)?.role === "admin";
   return (
     <Sidebar {...props}>
       <SidebarHeader className="border-sidebar-border h-16 border-b">
@@ -50,6 +51,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+
+          {isAdmin && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Administration</SidebarGroupLabel>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/admin/discord-servers">
+                      <SettingsIcon />
+                      <span>Serveurs Discord</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
+
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarGroupLabel>

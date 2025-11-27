@@ -1,0 +1,13 @@
+{
+  "folders": [
+	{
+		"path": "."
+	},
+	{
+		"path": "../bot-discord-patate"
+	}
+],
+  "settings": {
+    "typescript.tsdk": "./node_modules/typescript/lib"
+  }
+}

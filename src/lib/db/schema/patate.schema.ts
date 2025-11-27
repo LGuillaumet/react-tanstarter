@@ -17,14 +17,14 @@ import { user } from "./auth.schema";
 // Une patate a des fichiers
 
 export const patate = pgTable("patate", {
-  id: serial("id").primaryKey(),
+  id: serial("id").primaryKey().notNull(),
   name: text("name").notNull(),
   rules: text("rules"),
   theme: text("theme"),
   currentUserId: text("current_user_id").references(() => user.id, {
     onDelete: "set null",
   }),
-  processStep: text({ enum: ["DRAFT", "STARTED", "ADMIN_REVIEW", "COMPLETED"] })
+  processStep: text("process_step", { enum: ["DRAFT", "STARTED", "ADMIN_REVIEW", "COMPLETED"] })
     .default("DRAFT")
     .notNull(),
   discordServerId: text("discord_server_id").notNull(),
@@ -44,7 +44,7 @@ export const patate = pgTable("patate", {
 export const patateParticipant = pgTable(
   "patate_participant",
   {
-    id: serial("id").primaryKey(),
+    id: serial("id").primaryKey().notNull(),
     patateId: integer("patate_id")
       .notNull()
       .references(() => patate.id, { onDelete: "cascade" }),
@@ -71,7 +71,7 @@ export const patateParticipant = pgTable(
 );
 
 export const patateFile = pgTable("patate_file", {
-  id: serial("id").primaryKey(),
+  id: serial("id").primaryKey().notNull(),
   patateId: integer("patate_id")
     .notNull()
     .references(() => patate.id, { onDelete: "cascade" }),
@@ -89,7 +89,7 @@ export const patateFile = pgTable("patate_file", {
 export const patateFileLike = pgTable(
   "patate_file_like",
   {
-    id: serial("id").primaryKey(),
+    id: serial("id").primaryKey().notNull(),
     patateFileId: integer("patate_file_id")
       .notNull()
       .references(() => patateFile.id, { onDelete: "cascade" }),
@@ -106,7 +106,7 @@ export const patateFileLike = pgTable(
 );
 
 export const patateFileComment = pgTable("patate_file_comment", {
-  id: serial("id").primaryKey(),
+  id: serial("id").primaryKey().notNull(),
   patateFileId: integer("patate_file_id")
     .notNull()
     .references(() => patateFile.id, { onDelete: "cascade" }),
@@ -119,7 +119,7 @@ export const patateFileComment = pgTable("patate_file_comment", {
 });
 
 export const patateProblem = pgTable("patate_problem", {
-  id: serial("id").primaryKey(),
+  id: serial("id").primaryKey().notNull(),
   patateId: integer("patate_id")
     .notNull()
     .references(() => patate.id, { onDelete: "cascade" }),

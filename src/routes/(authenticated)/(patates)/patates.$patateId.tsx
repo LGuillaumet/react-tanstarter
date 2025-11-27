@@ -64,6 +64,10 @@ export const Route = createFileRoute("/(authenticated)/(patates)/patates/$patate
       throw notFound({ routeId: "/(authenticated)/(patates)/patates/$patateId" });
     }
   },
+  headers: async () => ({
+    title: "Détail de la patate",
+    description: "Détail de la patate sélectionnée",
+  }),
 });
 
 function PatateDetailPage() {

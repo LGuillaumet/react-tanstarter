@@ -6,29 +6,28 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { discordService } from "~/lib/services/discordService";
+import { listDiscordServersServerFunction } from "~/routes/(authenticated)/admin/server/listDiscordServers.serverFunction";
 import { Route as AuthenticatedRoute } from "~/routes/(authenticated)/route";
 import type { DiscordGuildChannel } from "~/types";
 import type { CreatePatateInput } from "./server/createPatate.serverFunction";
 import { createPatateServerFunction } from "./server/createPatate.serverFunction";
-import { getDiscordGuildServerFunction } from "./server/getDiscordGuild.serverFunction";
 import { getDiscordGuildChannelsServerFunction } from "./server/getDiscordGuildChannels.serverFunction";
-
-type DiscordServerOption = {
-  id: string;
-};
-
-const DISCORD_SERVER_OPTIONS: DiscordServerOption[] = [
-  {
-    id: "482343720491155467",
-  },
-];
-
-const DEFAULT_DISCORD_SERVER_ID = DISCORD_SERVER_OPTIONS[0]?.id ?? "";
 
 export const Route = createFileRoute("/(authenticated)/(patates)/patates/create")({
   component: CreatePatatePage,
+  headers: async () => ({
+    title: "Créer une patate",
+    description: "Créez une nouvelle partie de patate chaude",
+  }),
 });
 
 function CreatePatatePage() {
@@ -41,11 +40,17 @@ function CreatePatatePage() {
     name: "",
     rules: "",
     theme: "",
-    discordServerId: DEFAULT_DISCORD_SERVER_ID,
+    discordServerId: "",
     discordChannelId: "",
   });
 
   const hasDiscordServerSelection = Boolean(formData.discordServerId);
+
+  // Fetch registered Discord servers from DB
+  const { data: servers = [], isLoading: isLoadingServers } = useQuery({
+    queryKey: ["discord-servers"],
+    queryFn: () => listDiscordServersServerFunction(),
+  });
 
   const {
     data: discordChannels = [],
@@ -63,26 +68,17 @@ function CreatePatatePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: selectedGuild, isLoading: isLoadingSelectedGuild } = useQuery({
-    queryKey: ["discordGuildMetadata", formData.discordServerId],
-    queryFn: () =>
-      getDiscordGuildServerFunction({
-        data: { guildId: formData.discordServerId },
-      }),
-    enabled: hasDiscordServerSelection,
-    refetchOnWindowFocus: false,
-    staleTime: 10 * 60 * 1000,
-  });
+  const selectedServer = servers.find((s) => s.id === formData.discordServerId);
 
   const selectedGuildIconUrl =
     discordService.getDiscordServerIconUrl({
       guildId: formData.discordServerId,
-      iconId: selectedGuild?.icon ?? null,
+      iconId: selectedServer?.icon ?? null,
       size: 96,
     }) ?? undefined;
 
   const selectedGuildDisplayName =
-    selectedGuild?.name ??
+    selectedServer?.name ??
     (formData.discordServerId
       ? `Serveur ${formData.discordServerId}`
       : "Serveur Discord");
@@ -91,6 +87,27 @@ function CreatePatatePage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isServerSelectDisabled = isLoadingServers || servers.length === 0;
+  const serverSelectPlaceholder = isLoadingServers
+    ? "Chargement des serveurs..."
+    : servers.length === 0
+      ? "Aucun serveur disponible"
+      : "Sélectionnez un serveur";
+
+  const isChannelSelectDisabled =
+    !hasDiscordServerSelection ||
+    isLoadingDiscordChannels ||
+    isDiscordChannelsError ||
+    discordChannels.length === 0;
+
+  const channelSelectPlaceholder = !hasDiscordServerSelection
+    ? "Choisissez d'abord un serveur"
+    : isLoadingDiscordChannels
+      ? "Chargement des canaux..."
+      : discordChannels.length === 0
+        ? "Aucun canal disponible"
+        : "Sélectionnez un canal";
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -177,80 +194,83 @@ function CreatePatatePage() {
               <AvatarImage src={selectedGuildIconUrl} alt={selectedGuildDisplayName} />
               <AvatarFallback>{selectedGuildInitial}</AvatarFallback>
             </Avatar>
-            <select
-              id="discordServerId"
-              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-              value={formData.discordServerId}
-              onChange={(event) =>
+            <Select
+              value={formData.discordServerId || ""}
+              onValueChange={(value) =>
                 setFormData((prev) => ({
                   ...prev,
-                  discordServerId: event.target.value,
+                  discordServerId: value,
                   discordChannelId: "",
                 }))
               }
+              disabled={isServerSelectDisabled}
             >
-              {DISCORD_SERVER_OPTIONS.length === 0 ? (
-                <option value="">Aucun serveur disponible</option>
-              ) : null}
-              {DISCORD_SERVER_OPTIONS.map((server) => {
-                const isSelected = server.id === formData.discordServerId;
-                const resolvedLabel =
-                  isSelected && selectedGuild?.name
-                    ? `${selectedGuild.name} (${server.id})`
-                    : server.id;
-                return (
-                  <option key={server.id} value={server.id}>
-                    {resolvedLabel}
-                  </option>
-                );
-              })}
-            </select>
+              <SelectTrigger className="w-full" id="discordServerId">
+                <SelectValue placeholder={serverSelectPlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {servers.length === 0 ? (
+                  <SelectItem value="__no-server" disabled>
+                    Aucun serveur disponible
+                  </SelectItem>
+                ) : (
+                  servers.map((server) => {
+                    const iconUrl =
+                      discordService.getDiscordServerIconUrl({
+                        guildId: server.id,
+                        iconId: server.icon ?? null,
+                        size: 64,
+                      }) ?? undefined;
+
+                    return (
+                      <SelectItem key={server.id} value={server.id}>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={iconUrl} alt={server.name} />
+                            <AvatarFallback>
+                              {server.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{server.name}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })
+                )}
+              </SelectContent>
+            </Select>
           </div>
-          {isLoadingSelectedGuild ? (
-            <p className="text-muted-foreground text-xs">
-              Chargement de l'aperçu du serveur...
-            </p>
-          ) : null}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="discordChannelId">Canal Discord</Label>
-          <select
-            id="discordChannelId"
-            className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          <Select
             value={formData.discordChannelId ?? ""}
-            onChange={(event) =>
+            onValueChange={(value) =>
               setFormData((prev) => ({
                 ...prev,
-                discordChannelId: event.target.value,
+                discordChannelId: value,
               }))
             }
-            disabled={
-              !hasDiscordServerSelection ||
-              isLoadingDiscordChannels ||
-              isDiscordChannelsError ||
-              discordChannels.length === 0
-            }
+            disabled={isChannelSelectDisabled}
           >
-            {isLoadingDiscordChannels ? (
-              <option value="">Chargement des canaux...</option>
-            ) : null}
-            {!isLoadingDiscordChannels && discordChannels.length === 0 ? (
-              <option value="">Aucun canal disponible</option>
-            ) : null}
-            {!isLoadingDiscordChannels && discordChannels.length > 0 ? (
-              <>
-                <option value="" disabled>
-                  Sélectionnez un canal
-                </option>
-                {discordChannels.map((channel) => (
-                  <option key={channel.id} value={channel.id}>
+            <SelectTrigger className="w-full" id="discordChannelId">
+              <SelectValue placeholder={channelSelectPlaceholder} />
+            </SelectTrigger>
+            <SelectContent>
+              {discordChannels.length === 0 ? (
+                <SelectItem value="__no-channel" disabled>
+                  {channelSelectPlaceholder}
+                </SelectItem>
+              ) : (
+                discordChannels.map((channel) => (
+                  <SelectItem key={channel.id} value={channel.id}>
                     {channel.name} ({channel.id})
-                  </option>
-                ))}
-              </>
-            ) : null}
-          </select>
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
           {isDiscordChannelsError ? (
             <p className="text-destructive text-xs">
               Impossible de charger les canaux Discord :{" "}

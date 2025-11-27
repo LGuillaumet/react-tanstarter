@@ -18,9 +18,11 @@ import { Route as authPagesAuth_errorRouteImport } from './routes/(auth-pages)/a
 import { Route as authenticatedDashboardRouteRouteImport } from './routes/(authenticated)/dashboard/route'
 import { Route as authenticatedDashboardIndexRouteImport } from './routes/(authenticated)/dashboard/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as authenticatedAdminDiscordServersRouteImport } from './routes/(authenticated)/admin/discord-servers'
 import { Route as authenticatedpatatesPatatesIndexRouteImport } from './routes/(authenticated)/(patates)/patates.index'
 import { Route as authenticatedpatatesPatatesCreateRouteImport } from './routes/(authenticated)/(patates)/patates.create'
 import { Route as authenticatedpatatesPatatesPatateIdRouteImport } from './routes/(authenticated)/(patates)/patates.$patateId'
+import { Route as authenticatedAdminServerDeleteDiscordServerServerFunctionRouteImport } from './routes/(authenticated)/admin/server/deleteDiscordServer.serverFunction'
 
 const authenticatedRouteRoute = authenticatedRouteRouteImport.update({
   id: '/(authenticated)',
@@ -67,6 +69,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const authenticatedAdminDiscordServersRoute =
+  authenticatedAdminDiscordServersRouteImport.update({
+    id: '/admin/discord-servers',
+    path: '/admin/discord-servers',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 const authenticatedpatatesPatatesIndexRoute =
   authenticatedpatatesPatatesIndexRouteImport.update({
     id: '/(patates)/patates/',
@@ -85,6 +93,12 @@ const authenticatedpatatesPatatesPatateIdRoute =
     path: '/patates/$patateId',
     getParentRoute: () => authenticatedRouteRoute,
   } as any)
+const authenticatedAdminServerDeleteDiscordServerServerFunctionRoute =
+  authenticatedAdminServerDeleteDiscordServerServerFunctionRouteImport.update({
+    id: '/admin/server/deleteDiscordServer/serverFunction',
+    path: '/admin/server/deleteDiscordServer/serverFunction',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -92,22 +106,26 @@ export interface FileRoutesByFullPath {
   '/auth_error': typeof authPagesAuth_errorRoute
   '/login': typeof authPagesLoginRoute
   '/signup': typeof authPagesSignupRoute
+  '/admin/discord-servers': typeof authenticatedAdminDiscordServersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard/': typeof authenticatedDashboardIndexRoute
   '/patates/$patateId': typeof authenticatedpatatesPatatesPatateIdRoute
   '/patates/create': typeof authenticatedpatatesPatatesCreateRoute
   '/patates': typeof authenticatedpatatesPatatesIndexRoute
+  '/admin/server/deleteDiscordServer/serverFunction': typeof authenticatedAdminServerDeleteDiscordServerServerFunctionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth_error': typeof authPagesAuth_errorRoute
   '/login': typeof authPagesLoginRoute
   '/signup': typeof authPagesSignupRoute
+  '/admin/discord-servers': typeof authenticatedAdminDiscordServersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard': typeof authenticatedDashboardIndexRoute
   '/patates/$patateId': typeof authenticatedpatatesPatatesPatateIdRoute
   '/patates/create': typeof authenticatedpatatesPatatesCreateRoute
   '/patates': typeof authenticatedpatatesPatatesIndexRoute
+  '/admin/server/deleteDiscordServer/serverFunction': typeof authenticatedAdminServerDeleteDiscordServerServerFunctionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,11 +136,13 @@ export interface FileRoutesById {
   '/(auth-pages)/auth_error': typeof authPagesAuth_errorRoute
   '/(auth-pages)/login': typeof authPagesLoginRoute
   '/(auth-pages)/signup': typeof authPagesSignupRoute
+  '/(authenticated)/admin/discord-servers': typeof authenticatedAdminDiscordServersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/(authenticated)/dashboard/': typeof authenticatedDashboardIndexRoute
   '/(authenticated)/(patates)/patates/$patateId': typeof authenticatedpatatesPatatesPatateIdRoute
   '/(authenticated)/(patates)/patates/create': typeof authenticatedpatatesPatatesCreateRoute
   '/(authenticated)/(patates)/patates/': typeof authenticatedpatatesPatatesIndexRoute
+  '/(authenticated)/admin/server/deleteDiscordServer/serverFunction': typeof authenticatedAdminServerDeleteDiscordServerServerFunctionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,22 +152,26 @@ export interface FileRouteTypes {
     | '/auth_error'
     | '/login'
     | '/signup'
+    | '/admin/discord-servers'
     | '/api/auth/$'
     | '/dashboard/'
     | '/patates/$patateId'
     | '/patates/create'
     | '/patates'
+    | '/admin/server/deleteDiscordServer/serverFunction'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth_error'
     | '/login'
     | '/signup'
+    | '/admin/discord-servers'
     | '/api/auth/$'
     | '/dashboard'
     | '/patates/$patateId'
     | '/patates/create'
     | '/patates'
+    | '/admin/server/deleteDiscordServer/serverFunction'
   id:
     | '__root__'
     | '/'
@@ -157,11 +181,13 @@ export interface FileRouteTypes {
     | '/(auth-pages)/auth_error'
     | '/(auth-pages)/login'
     | '/(auth-pages)/signup'
+    | '/(authenticated)/admin/discord-servers'
     | '/api/auth/$'
     | '/(authenticated)/dashboard/'
     | '/(authenticated)/(patates)/patates/$patateId'
     | '/(authenticated)/(patates)/patates/create'
     | '/(authenticated)/(patates)/patates/'
+    | '/(authenticated)/admin/server/deleteDiscordServer/serverFunction'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -236,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(authenticated)/admin/discord-servers': {
+      id: '/(authenticated)/admin/discord-servers'
+      path: '/admin/discord-servers'
+      fullPath: '/admin/discord-servers'
+      preLoaderRoute: typeof authenticatedAdminDiscordServersRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
     '/(authenticated)/(patates)/patates/': {
       id: '/(authenticated)/(patates)/patates/'
       path: '/patates'
@@ -255,6 +288,13 @@ declare module '@tanstack/react-router' {
       path: '/patates/$patateId'
       fullPath: '/patates/$patateId'
       preLoaderRoute: typeof authenticatedpatatesPatatesPatateIdRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
+    '/(authenticated)/admin/server/deleteDiscordServer/serverFunction': {
+      id: '/(authenticated)/admin/server/deleteDiscordServer/serverFunction'
+      path: '/admin/server/deleteDiscordServer/serverFunction'
+      fullPath: '/admin/server/deleteDiscordServer/serverFunction'
+      preLoaderRoute: typeof authenticatedAdminServerDeleteDiscordServerServerFunctionRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
   }
@@ -292,19 +332,24 @@ const authenticatedDashboardRouteRouteWithChildren =
 
 interface authenticatedRouteRouteChildren {
   authenticatedDashboardRouteRoute: typeof authenticatedDashboardRouteRouteWithChildren
+  authenticatedAdminDiscordServersRoute: typeof authenticatedAdminDiscordServersRoute
   authenticatedpatatesPatatesPatateIdRoute: typeof authenticatedpatatesPatatesPatateIdRoute
   authenticatedpatatesPatatesCreateRoute: typeof authenticatedpatatesPatatesCreateRoute
   authenticatedpatatesPatatesIndexRoute: typeof authenticatedpatatesPatatesIndexRoute
+  authenticatedAdminServerDeleteDiscordServerServerFunctionRoute: typeof authenticatedAdminServerDeleteDiscordServerServerFunctionRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedDashboardRouteRoute:
     authenticatedDashboardRouteRouteWithChildren,
+  authenticatedAdminDiscordServersRoute: authenticatedAdminDiscordServersRoute,
   authenticatedpatatesPatatesPatateIdRoute:
     authenticatedpatatesPatatesPatateIdRoute,
   authenticatedpatatesPatatesCreateRoute:
     authenticatedpatatesPatatesCreateRoute,
   authenticatedpatatesPatatesIndexRoute: authenticatedpatatesPatatesIndexRoute,
+  authenticatedAdminServerDeleteDiscordServerServerFunctionRoute:
+    authenticatedAdminServerDeleteDiscordServerServerFunctionRoute,
 }
 
 const authenticatedRouteRouteWithChildren =

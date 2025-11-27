@@ -7,6 +7,10 @@ import { patateQueryOptions } from "./hooks";
 
 export const Route = createFileRoute("/(authenticated)/(patates)/patates/")({
   component: PatatesListPage,
+  headers: async () => ({
+    title: "Liste des patates",
+    description: "Toutes les patates disponibles",
+  }),
 });
 
 function PatatesListPage() {
